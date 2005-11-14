@@ -25,7 +25,7 @@ use Carp;
 use Apache::Htpasswd;
 use Apache::Htgroup;
 
-our $VERSION = 0.01;
+our $VERSION = 0.02;
 
 sub _ApacheHtpasswd {
 	my $self = shift;
@@ -56,7 +56,11 @@ sub htusers {
 
 	if (ref $self) {
 		if (@_) {
-			$self->{_apachehtpasswd} = Apache::Htpasswd->new({passwdFile => $_[0]});
+			$self->{_apachehtpasswd} = Apache::Htpasswd->new(
+				{ passwdFile => $_[0],
+				  ReadOnly => 1,
+				}
+			);
 			$self->{htusers} = $_[0];
 		}
 
@@ -64,7 +68,12 @@ sub htusers {
 	}
 	else {
 		if (@_) {
-			$self->_ApacheHtpasswd( Apache::Htpasswd->new({passwdFile => $_[0]}) );
+			$self->_ApacheHtpasswd(
+				Apache::Htpasswd->new(
+					{ passwdFile => $_[0],
+					  ReadOnly => 1,
+					}
+			) );
 		}
 
 		return $self->_htusers_accessor(@_);
@@ -126,9 +135,23 @@ sub _op_group_check {
 
 sub check {
 	my ($self, $user, $pass, %named) = @_;
+
+	return 0 unless $self->_ApacheHtpasswd->htCheckPassword($user, $pass);
+
+	if (defined $named{groups}) {
+		return 0 unless $self->groupcheck($user, %named);
+	}
+
+	return 1;
+}
+
+sub groupcheck {
+	my ($self, $user, %named) = @_;
 	my @groups;
 
-	@groups = @{$named{groups}} if defined $named{groups};
+	defined $named{groups} or croak "->groupcheck called with no groups to check";
+
+	@groups = @{$named{groups}};
 
 	GROUP: foreach (@groups) {
 		if (ref $_ eq "ARRAY") {
@@ -139,7 +162,7 @@ sub check {
 		}
 	}
 
-	return $self->_ApacheHtpasswd->htCheckPassword($user, $pass);
+	return 1;
 }
 
 sub new {
@@ -262,6 +285,12 @@ For example:
     ],
     [Not => qw/crazy bastard invalid/], # but none of these
   ])                                    # must match
+
+=item B<groupcheck>
+
+Where $foo is a class name or an instance of Authen::Class::HtAuth
+
+  $foo->groupcheck($username, groups => \@groups);
 
 =back
 

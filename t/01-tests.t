@@ -2,7 +2,7 @@
 
 use Test::More tests => 14;
 
-use_ok( 'Authen::Class::HtAuth 0.01' );
+use_ok( 'Authen::Class::HtAuth' );
 my $atest; eval { $atest = Authen::Class::HtAuth->new(
 	htusers => "t/htusers",
 	htgroups => "t/htgroups",
@@ -15,13 +15,13 @@ ok($atest->check(qw/ryan fuckface/, groups => [
 	[One => qw/admin users/],
 	qw/middleclass american/, ]),
 	"valid groups check");
-ok($atest->check(qw/ryan fuckface/, groups => [
+ok($atest->groupcheck("ryan", groups => [
 	[All => qw/admin american/],
 	qw/middleclass american/, ]),
 	"valid groups check 2");
-ok(!$atest->check("ryan", "fuckface", groups => [qw/admin users american/]),
+ok(!$atest->groupcheck("ryan", groups => [qw/admin users american/]),
 	"invalid groups check");
-ok(!$atest->check("ryan", "fuckface", groups => [
+ok(!$atest->groupcheck("ryan", groups => [
 	[All => qw/admin users middleclass american/],
 	]), "invalid groups check 2");
 ok($atest->check(qw/ryan fuckface/, groups => [
@@ -30,26 +30,26 @@ ok($atest->check(qw/ryan fuckface/, groups => [
 		[all => qw/middleclass american asshole/],
 	]]),
 	"complex group check");
-ok($atest->check(qw/ryan fuckface/, groups => [
+ok($atest->groupcheck("ryan", groups => [
 	[One => 
 		[one => qw/admin users/],
 		[all => qw/middleclass american ashole/],
 	]]),
 	"complex group check 2");
-ok($atest->check(qw/ryan fuckface/, groups => [
+ok($atest->groupcheck("ryan", groups => [
 	[All => 
 		[one => qw/admin users/],
 		[all => qw/middleclass american asshole/],
 	]]),
 	"complex group check 3");
-ok($atest->check(qw/ryan fuckface/, groups => [
+ok($atest->groupcheck("ryan", groups => [
 	[All => 
 		[one => qw/admin users/],
 		[all => qw/middleclass american asshole/],
 		[not => qw/does not exist/],
 	]]),
 	"complex group check 4");
-ok(!$atest->check(qw/ryan fuckface/, groups => [
+ok(!$atest->groupcheck("ryan", groups => [
 	[All => 
 		[one => qw/admin users/],
 		[all => qw/middleclass american asshole/],
